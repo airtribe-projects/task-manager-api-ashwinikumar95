@@ -4,14 +4,14 @@ const router = express.Router();
 const {
   createTask,
   getTasks,
+  getTasksByPriority,
   getTaskById,
   updateTask,
   deleteTask,
 } = require('../controllers/taskController');
 
-
-
 router.post('/tasks', createTask);
+router.get('/tasks/priority/:level', getTasksByPriority);
 router.get('/tasks', getTasks);
 router.get('/tasks/:id', getTaskById);
 router.put('/tasks/:id', updateTask);

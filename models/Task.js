@@ -1,4 +1,13 @@
-const seedTasks = [];
+const seedTasks = [
+  {
+    id: 1,
+    title: 'Set up environment',
+    description: 'Install Node.js, npm, and git',
+    completed: true,
+    priority: 'medium',
+    createdAt: new Date('2020-01-01T00:00:00.000Z').toISOString(),
+  },
+];
 
 let tasks = seedTasks.map((t) => ({ ...t }));
 
@@ -38,7 +47,11 @@ class Task {
   static async findByIdAndUpdate(id, patch, _options) {
     const idx = tasks.findIndex((t) => key(t.id) === key(id));
     if (idx === -1) return null;
-    Object.assign(tasks[idx], patch);
+    const merged = { ...tasks[idx] };
+    for (const [k, v] of Object.entries(patch)) {
+      if (v !== undefined) merged[k] = v;
+    }
+    tasks[idx] = merged;
     return clone(tasks[idx]);
   }
 

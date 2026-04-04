@@ -1,8 +1,8 @@
 {
   "info": {
-    "_postman_id": "6d9b7792-f576-4278-a0d9-27bcc0ccdc9e",
+    "_postman_id": "f6bc1bf5-9174-4c78-9a18-5efa5bfc20ac",
     "name": "Task Manager API (from server.test.js)",
-    "description": "Requests aligned with `test/server.test.js`. Default `baseUrl` is `http://localhost:3000/api` for `app.use('/api', taskRoutes)`. To match tests that call `/tasks` at the server root, set `baseUrl` to `http://localhost:3000` (no `/api`).",
+    "description": "Aligned with `test/server.test.js` plus newer features: `?completed=`, `?order=` sort by `createdAt`, `priority` on tasks, and `GET /tasks/priority/:level`.\n\nSet **baseUrl** to `http://localhost:3000` (routes are `/tasks`, not under `/api`).",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "_exporter_id": "18021075"
   },
@@ -22,7 +22,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"New Task\",\n  \"description\": \"New Task Description\",\n  \"completed\": false\n}"
+              "raw": "{\n  \"title\": \"New Task\",\n  \"description\": \"New Task Description\",\n  \"priority\": \"high\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/tasks",
@@ -33,7 +33,7 @@
                 "tasks"
               ]
             },
-            "description": "Expects **201**. Matches `server.test.js` \"POST /tasks\" (path is `/tasks` under `baseUrl`)."
+            "description": "**201** — `title` and `description` required. Optional `priority`: `low` | `medium` | `high` (default **medium**). Server sets `completed: false` and `createdAt`."
           },
           "response": []
         },
@@ -60,7 +60,34 @@
                 "tasks"
               ]
             },
-            "description": "Expects **400**. Missing required fields per test."
+            "description": "**400** — missing `description` (or `title`)."
+          },
+          "response": []
+        },
+        {
+          "name": "POST Create task — invalid priority (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Task\",\n  \"description\": \"Desc\",\n  \"priority\": \"urgent\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tasks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tasks"
+              ]
+            },
+            "description": "**400** — `priority` must be `low`, `medium`, or `high`."
           },
           "response": []
         },
@@ -78,7 +105,197 @@
                 "tasks"
               ]
             },
-            "description": "Expects **200**; first item should have `id`, `title`, `description`, `completed` (per test)."
+            "description": "**200** — sorted by `createdAt` ascending (oldest first) by default."
+          },
+          "response": []
+        },
+        {
+          "name": "GET List tasks — filter completed=true",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tasks?completed=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tasks"
+              ],
+              "query": [
+                {
+                  "key": "completed",
+                  "value": "true"
+                }
+              ]
+            },
+            "description": "Only tasks with `completed: true`."
+          },
+          "response": []
+        },
+        {
+          "name": "GET List tasks — filter completed=false",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tasks?completed=false",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tasks"
+              ],
+              "query": [
+                {
+                  "key": "completed",
+                  "value": "false"
+                }
+              ]
+            },
+            "description": "Only tasks with `completed: false`."
+          },
+          "response": []
+        },
+        {
+          "name": "GET List tasks — sort newest first (order=desc)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tasks?order=desc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tasks"
+              ],
+              "query": [
+                {
+                  "key": "order",
+                  "value": "desc"
+                }
+              ]
+            },
+            "description": "Sort by `createdAt` descending. Use with `completed` if needed."
+          },
+          "response": []
+        },
+        {
+          "name": "GET List tasks — filter + sort",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tasks?completed=false&order=desc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tasks"
+              ],
+              "query": [
+                {
+                  "key": "completed",
+                  "value": "false"
+                },
+                {
+                  "key": "order",
+                  "value": "desc"
+                }
+              ]
+            },
+            "description": "Combine `completed` and `order`."
+          },
+          "response": []
+        },
+        {
+          "name": "GET List tasks — bad completed query (400)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tasks?completed=yes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tasks"
+              ],
+              "query": [
+                {
+                  "key": "completed",
+                  "value": "yes"
+                }
+              ]
+            },
+            "description": "**400** — `completed` must be string `true` or `false`."
+          },
+          "response": []
+        },
+        {
+          "name": "GET Tasks by priority — high",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tasks/priority/medium",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tasks",
+                "priority",
+                "medium"
+              ]
+            },
+            "description": "**200** — tasks where `priority` matches `{{priorityLevel}}` (`low` | `medium` | `high`). Sorted by `createdAt` asc unless you add `?order=desc`."
+          },
+          "response": []
+        },
+        {
+          "name": "GET Tasks by priority — with order=desc",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tasks/priority/high?order=desc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tasks",
+                "priority",
+                "high"
+              ],
+              "query": [
+                {
+                  "key": "order",
+                  "value": "desc"
+                }
+              ]
+            },
+            "description": "Same as by-priority, newest `createdAt` first."
+          },
+          "response": []
+        },
+        {
+          "name": "GET Tasks by priority — invalid level (400)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tasks/priority/critical",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tasks",
+                "priority",
+                "critical"
+              ]
+            },
+            "description": "**400** — level must be `low`, `medium`, or `high`."
           },
           "response": []
         },
@@ -88,16 +305,16 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/tasks/dab64a29-3eda-46bd-9d73-41448be7b164",
+              "raw": "{{baseUrl}}/tasks/a238cade-a169-49a5-baf7-1eec1309cef5",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "tasks",
-                "dab64a29-3eda-46bd-9d73-41448be7b164"
+                "a238cade-a169-49a5-baf7-1eec1309cef5"
               ]
             },
-            "description": "Test uses id **1**. Your app may use MongoDB ObjectIds — set `taskId` accordingly, or add this route if missing."
+            "description": "**200** — use seeded id `1` or any task `id` from the list."
           },
           "response": []
         },
@@ -107,16 +324,16 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/tasks/dab64a29-3eda-46bd-9d73-41448be7b163",
+              "raw": "{{baseUrl}}/tasks/a238cade-a169-49a5-baf7-1eec1309cef4",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "tasks",
-                "dab64a29-3eda-46bd-9d73-41448be7b163"
+                "a238cade-a169-49a5-baf7-1eec1309cef4"
               ]
             },
-            "description": "Expects **404** for `/tasks/999` in the test."
+            "description": "**404** — e.g. `999`."
           },
           "response": []
         },
@@ -132,19 +349,19 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Updated Task\",\n  \"description\": \"Updated Task Description\",\n  \"completed\": true\n}"
+              "raw": "{\n  \"title\": \"Updated Task\",\n  \"description\": \"Updated Task Description\",\n  \"completed\": true,\n  \"priority\": \"low\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/tasks/dab64a29-3eda-46bd-9d73-41448be7b164",
+              "raw": "{{baseUrl}}/tasks/a238cade-a169-49a5-baf7-1eec1309cef5",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "tasks",
-                "dab64a29-3eda-46bd-9d73-41448be7b164"
+                "a238cade-a169-49a5-baf7-1eec1309cef5"
               ]
             },
-            "description": "Expects **200**."
+            "description": "**200** — optional fields; `priority` must be `low` | `medium` | `high` when sent."
           },
           "response": []
         },
@@ -163,16 +380,16 @@
               "raw": "{\n  \"title\": \"Updated Task\",\n  \"description\": \"Updated Task Description\",\n  \"completed\": true\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/tasks/dab64a29-3eda-46bd-9d73-41448be7b163",
+              "raw": "{{baseUrl}}/tasks/a238cade-a169-49a5-baf7-1eec1309cef2",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "tasks",
-                "dab64a29-3eda-46bd-9d73-41448be7b163"
+                "a238cade-a169-49a5-baf7-1eec1309cef2"
               ]
             },
-            "description": "Expects **404**."
+            "description": "**404**."
           },
           "response": []
         },
@@ -191,16 +408,44 @@
               "raw": "{\n  \"title\": \"Updated Task\",\n  \"description\": \"Updated Task Description\",\n  \"completed\": \"true\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/tasks/{{taskId}}",
+              "raw": "{{baseUrl}}/tasks/a238cade-a169-49a5-baf7-1eec1309cef5",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "tasks",
-                "{{taskId}}"
+                "a238cade-a169-49a5-baf7-1eec1309cef5"
               ]
             },
-            "description": "Expects **400** — `completed` must be boolean, not string."
+            "description": "**400** — `completed` must be boolean."
+          },
+          "response": []
+        },
+        {
+          "name": "PUT Update task — invalid priority (400)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"priority\": \"urgent\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tasks/a238cade-a169-49a5-baf7-1eec1309cef5",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tasks",
+                "a238cade-a169-49a5-baf7-1eec1309cef5"
+              ]
+            },
+            "description": "**400** — invalid `priority` value."
           },
           "response": []
         },
@@ -210,16 +455,16 @@
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/tasks/{{taskId}}",
+              "raw": "{{baseUrl}}/tasks/a238cade-a169-49a5-baf7-1eec1309cef5",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "tasks",
-                "{{taskId}}"
+                "a238cade-a169-49a5-baf7-1eec1309cef5"
               ]
             },
-            "description": "Expects **200**."
+            "description": "**200** — returns removed task."
           },
           "response": []
         },
@@ -229,16 +474,16 @@
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/tasks/{{invalidTaskId}}",
+              "raw": "{{baseUrl}}/tasks/a238cade-a169-49a5-baf7-1eec1309cef5",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "tasks",
-                "{{invalidTaskId}}"
+                "a238cade-a169-49a5-baf7-1eec1309cef5"
               ]
             },
-            "description": "Expects **404**."
+            "description": "**404**."
           },
           "response": []
         }
@@ -248,7 +493,7 @@
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:3000/api"
+      "value": "http://localhost:3000"
     },
     {
       "key": "taskId",
@@ -257,6 +502,10 @@
     {
       "key": "invalidTaskId",
       "value": "999"
+    },
+    {
+      "key": "priorityLevel",
+      "value": "high"
     }
   ]
 }
